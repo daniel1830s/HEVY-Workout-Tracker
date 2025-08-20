@@ -4,6 +4,7 @@ import csv
 import pandas as pd
 import pyodbc
 from dotenv import load_dotenv
+from utils import connect_to_db
 
 load_dotenv()
 
@@ -82,41 +83,63 @@ def get_all_workouts():
                     })
     return pd.DataFrame(workouts)
 
-df = get_all_workouts()
+def insert_sql(df: pd.DataFrame):
+    # Try connecting to our database
+    conn = connect_to_db()
+    if conn is None:
+        print("Failed to connect to the database.")
+        return
 
-# Setting up DB conection
-driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
-server = "tcp:stormsdb.database.windows.net,1433"
-database = "DanielDB"
-
-
-try:
-    # Connection string for my Azure SQL Database
-    conn = pyodbc.connect(
-        f"DRIVER={{{driver_path}}};"
-        f"SERVER={server};"
-        f"DATABASE={database};"
-        f"UID={UID};"
-        f"PWD={PSWD};"
-        "Encrypt=yes;"
-        "TrustServerCertificate=no;"
-        "Connection Timeout=30;"
-    )
     cursor = conn.cursor()
-    cursor.execute("SELECT 1")
-    print(cursor.fetchone())
-    cursor.close()
-    conn.close()
 
-# Query to create our table in the database
+    try:
+        # Create the table in our DB if it does not already exist
 
-except Exception as e:
-    print("Error in connection:", e)
-'''
+        # Determine which columns will be strings/floats
+        num_cols = df.select_dtypes(include=['number']).columns.tolist()
+        cat_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+
+        # Fill the NaN values with None for SQL compatability
+        df[num_cols] = df[num_cols].where(pd.notnull(df[num_cols]), None)
+        
+        # Join the columns
+        columns = ', '.join(
+            [f"[{col}] NVARCHAR(MAX)" if col in cat_cols else f"[{col}] FLOAT" for col in df.columns]
+        )
+        
+        # Check if the table exists already and if not create it with the columns listed above
+        create_table_query = f"""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='workouts' AND xtype='U')
+            CREATE TABLE workouts ({columns})
+        """
+
+        cursor.execute(create_table_query)
+        conn.commit()
+
+        # Loop through the dataframe and insert the rows into our table
+        for index, row in df.iterrows():
+            print(f"Inserting row {index}")
+            # Create placeholders (as good practice to avoid SQL injection threats)
+            placeholders = ', '.join(['?'] * len(row))
+            # Prepare column names
+            columns = ', '.join([f"[{col}]" for col in df.columns])
+            # Generate insert query
+            insert_query = f"INSERT INTO workouts ({columns}) VALUES ({placeholders})"
+            # Execute the query with the current row's data
+            cursor.execute(insert_query, tuple(row))
+        conn.commit()
+
+        print("Successfully inserted data")
+
+        cursor.close()
+        conn.close()
+
+    except Exception as e:
+        print("Error in connection:", e)
+
 def run_pipeline():
     workouts = get_all_workouts()
-    
+    insert_sql(workouts)
 
 if __name__ == "__main__":
     run_pipeline()
-'''
