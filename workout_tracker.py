@@ -9,7 +9,8 @@ load_dotenv()
 
 # Declare environment variables
 API_KEY = os.getenv('HEVY_API_KEY')
-USER_ID = os.getenv('USER_ID')
+UID = os.getenv('UID')
+PSWD = os.getenv('PSWD')
 
 # Initialize HEVY API setup
 headers = {
@@ -83,21 +84,27 @@ def get_all_workouts():
 
 df = get_all_workouts()
 
+# Setting up DB conection
+driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
+server = "tcp:stormsdb.database.windows.net,1433"
+database = "DanielDB"
+
 
 try:
     # Connection string for my Azure SQL Database
     conn = pyodbc.connect(
-        "Driver={ODBC Driver 18 for SQL Server};"
-        "Server=tcp:stormsdb.database.windows.net,1433;"
-        "Database=DanielDB;"
-        "Uid={USER_ID};"
+        f"DRIVER={{{driver_path}}};"
+        f"SERVER={server};"
+        f"DATABASE={database};"
+        f"UID={UID};"
+        f"PWD={PSWD};"
         "Encrypt=yes;"
         "TrustServerCertificate=no;"
         "Connection Timeout=30;"
-        "Authentication=ActiveDirectoryIntegrated;"
     )
     cursor = conn.cursor()
-
+    cursor.execute("SELECT 1")
+    print(cursor.fetchone())
     cursor.close()
     conn.close()
 
