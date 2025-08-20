@@ -4,6 +4,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+'''
+----------------------------------------
+
+File with shared utility functions.
+(Or just functions that look messy
+in my pipeline)
+
+----------------------------------------
+
+'''
+
+# Helper function to connect to my Azure SQL DB
 def connect_to_db():
     # Setting up DB conection
     driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
@@ -28,3 +40,31 @@ def connect_to_db():
     except Exception as e:
         print("Error in connection:", e)
         return None
+
+# Helper function to clean the DataFrame (Taking all the changes from EDA into account)
+def clean_workouts(df):
+    df = df.copy()
+
+    mean_weight_by_exercise = df.groupby('exercise_title')['set_weight_lbs'].mean()
+    df['set_weight_lbs'] = df['set_weight_lbs'].fillna(df['exercise_title'].map(mean_weight_by_exercise))
+    df = df.dropna(subset=['set_weight_lbs'])
+
+    def create_workout_type(title):
+        title = title.lower()
+        if 'lower' in title or 'leg' in title:
+            return 'Lower'
+        elif 'upper' in title:
+            return 'Upper'
+        elif 'pull' in title:
+            return 'Pull'
+        elif 'push' in title:
+            return 'Push'
+        elif 'full' in title:
+            return 'Full Body'
+        else:
+            return 'Other'
+        
+    df.loc[:, 'workout_type'] = df['workout_title'].apply(create_workout_type)
+    df.drop(columns=['workout_title'], inplace=True)
+    df.rename(columns={'workout_type': 'workout_title'}, inplace=True)
+    return df
