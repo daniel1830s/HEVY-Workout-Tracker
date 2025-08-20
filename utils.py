@@ -1,6 +1,7 @@
 import pyodbc
 import os
 from dotenv import load_dotenv
+import pandas as pd
 
 load_dotenv()
 
@@ -63,8 +64,16 @@ def clean_workouts(df):
             return 'Full Body'
         else:
             return 'Other'
-        
+    
     df.loc[:, 'workout_type'] = df['workout_title'].apply(create_workout_type)
     df.drop(columns=['workout_title'], inplace=True)
-    df.rename(columns={'workout_type': 'workout_title'}, inplace=True)
+    # For some reason this isn't renaming it
+    df.rename(columns={'workout_title': 'workout_type'}, inplace=True)
+    return df
+
+# Helper function to convert start and end times to datetime objects
+def convert_times(df):
+    df = df.copy()
+    df['start_time'] = pd.to_datetime(df['start_time']).dt.tz_localize(None)
+    df['end_time'] = pd.to_datetime(df['end_time']).dt.tz_localize(None)
     return df
