@@ -1,12 +1,37 @@
 import streamlit as st
 import pandas as pd
+import pyodbc
 #import seaborn as sns
 #import matplotlib.pyplot as plt
 from utils import connect_to_db, convert_times
 
-# Connect to Azure SQL
-conn = connect_to_db()
-df = pd.read_sql("SELECT * FROM workouts", conn)
+# The following Azure SQL Connection code is adapted from Streamlit's documentation on MS SQL:
+# https://docs.streamlit.io/develop/tutorials/databases/mssql
+# Initialize connection.
+# Uses st.cache_resource to only run once.
+@st.cache_resource
+
+def init_connection():
+    return pyodbc.connect(
+        f"DRIVER={{{st.secrets['driver_path']}}};SERVER="
+        + st.secrets["server"]
+        + ";DATABASE="
+        + st.secrets["database"]
+        + ";UID="
+        + st.secrets["username"]
+        + ";PWD="
+        + st.secrets["password"]
+    )
+
+conn = init_connection()
+
+# Perform query.
+# Uses st.cache_data to only rerun when the query changes or after 10 min.
+@st.cache_data(ttl=600)
+def run_query(query):
+    return pd.read_sql_query(query, conn)
+
+df = run_query("SELECT * FROM workouts;")
 df = convert_times(df)
 
 st.title("Workout Dashboard")
