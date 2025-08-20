@@ -105,7 +105,6 @@ try:
 
 except Exception as e:
     print("Error in connection:", e)
-
 '''
 def run_pipeline():
     workouts = get_all_workouts()
