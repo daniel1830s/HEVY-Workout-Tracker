@@ -9,8 +9,16 @@ from utils import connect_to_db, convert_times
 # https://docs.streamlit.io/develop/tutorials/databases/mssql
 # Initialize connection.
 # Uses st.cache_resource to only run once.
-@st.cache_resource
 
+# Page configuration
+st.set_page_config(
+   page_title="Workout Tracker",
+   page_icon="🏋️‍♂️",
+   layout="wide",
+   initial_sidebar_state="expanded",
+)
+
+@st.cache_resource
 def init_connection():
     return pyodbc.connect(
         f"DRIVER={{{st.secrets['driver_path']}}};SERVER="
