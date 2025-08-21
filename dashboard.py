@@ -11,7 +11,7 @@ from datetime import datetime
 pio.templates.default = "plotly_dark"
 
 # Comment this out before deploying
-driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
+# driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
 
 ############################################################################################
                                     # Page/DB Config #
@@ -33,9 +33,9 @@ st.set_page_config(
 def init_connection():
     return pyodbc.connect(
         # Uncomment for testing
-        f"DRIVER={{{driver_path}}};"
+        #f"DRIVER={{{driver_path}}};"
         # Uncomment for deployment
-        #"DRIVER={ODBC Driver 17 for SQL Server};"
+        "DRIVER={ODBC Driver 17 for SQL Server};"
         f"SERVER={st.secrets['server']};"
         f"DATABASE={st.secrets['database']};"
         f"UID={st.secrets['username']};"
