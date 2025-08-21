@@ -172,7 +172,7 @@ with col1:
     # Add this to the HTML
     scrollable_html += f"<h4><em style='color: lightblue'>{most_recent_workout.iloc[0]['workout_type']}</em> on {date_part} at {time_part}</h4>"
     scrollable_html += "<hr>"
-    grouped_exercises = most_recent_workout.groupby('exercise_title')
+    grouped_exercises = most_recent_workout.groupby('exercise_title', sort=False)
     for exercise_title, sets_df in grouped_exercises:
         # Bold exercise title
         scrollable_html += f"<strong>{exercise_title}</strong>"
