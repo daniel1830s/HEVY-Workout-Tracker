@@ -79,7 +79,8 @@ most_recent_query = """
         workouts.exercise_notes,
         workouts.set_weight_lbs,
         workouts.workout_type,
-        workouts.workout_duration
+        workouts.workout_duration,
+        workouts.exercise_index
     FROM workouts
     JOIN MostRecent ON workouts.workout_id = MostRecent.workout_id
     ORDER BY workouts.exercise_index ASC
@@ -94,6 +95,7 @@ past_workouts_query = """
 """
 
 most_recent_workout = run_query(most_recent_query)
+most_recent_work = most_recent_workout.sort_values(by='exercise_index', ascending=True)
 past_workouts = run_query(past_workouts_query)
 past_month_workout_count, delta_label = get_count_and_delta(past_workouts)
 
