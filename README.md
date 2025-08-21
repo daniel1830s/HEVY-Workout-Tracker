@@ -60,7 +60,7 @@ This will:
 
 ---
 
-### chedule daily execution**
+### **Schedule daily execution**
 
 Use `schedule` library:
 
