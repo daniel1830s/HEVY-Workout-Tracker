@@ -3,7 +3,7 @@ import requests
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from utils import connect_to_db, clean_workouts, get_workout_count
+from utils import connect_to_db, clean_workouts, get_workout_count, send_email
 
 load_dotenv()
 
@@ -115,7 +115,8 @@ def create_table(conn, df: pd.DataFrame):
 
 def insert_sql(conn, df: pd.DataFrame):
     cursor = conn.cursor()
-    
+    rows_added = 0
+
     try:
         # Loop through the dataframe and insert the rows into our table
         # Create placeholders (as good practice to avoid SQL injection threats)
@@ -128,14 +129,17 @@ def insert_sql(conn, df: pd.DataFrame):
         cursor.fast_executemany = True
         # Execute the query with the current row's data
         cursor.executemany(insert_query, [tuple(row) for row in df.to_numpy()])
+        # Return the number of rows added
+        rows_added = cursor.rowcount
         conn.commit()
 
-        print("Successfully inserted data")
+        print(f"Successfully inserted {rows_added} rows.")
 
     except Exception as e:
         print("Error in connection:", e)
     finally:
         cursor.close()
+        return rows_added
         # Do not close connection here, it is closed in run_pipeline
 
 def run_pipeline():
@@ -155,7 +159,10 @@ def run_pipeline():
     create_table(conn, cleaned_workouts)
 
     # Insert data into the workouts table
-    insert_sql(conn, cleaned_workouts)
+    rows_added = insert_sql(conn, cleaned_workouts)
+
+    # Send an email to notify of successful DB update
+    send_email(rows_added)
 
     conn.close()
     
