@@ -5,6 +5,21 @@ import pyodbc
 #import matplotlib.pyplot as plt
 from utils import convert_times
 
+'''
+----------------------------------------
+
+      File to host Interactive 
+        StreamLit Dashboard
+
+----------------------------------------
+
+'''
+
+def list_odbc_drivers():
+    st.write("Available ODBC Drivers:", pyodbc.drivers())
+
+list_odbc_drivers()
+
 # Uncomment for testing
 # driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
 
