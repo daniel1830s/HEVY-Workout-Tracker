@@ -5,6 +5,9 @@ import pyodbc
 #import matplotlib.pyplot as plt
 from utils import convert_times
 
+# Uncomment for testing
+# driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
+
 # The following Azure SQL Connection code is adapted from Streamlit's documentation on MS SQL:
 # https://docs.streamlit.io/develop/tutorials/databases/mssql
 # Initialize connection.
@@ -21,14 +24,14 @@ st.set_page_config(
 @st.cache_resource
 def init_connection():
     return pyodbc.connect(
-        f"DRIVER={{{st.secrets['driver_path']}}};SERVER="
-        + st.secrets["server"]
-        + ";DATABASE="
-        + st.secrets["database"]
-        + ";UID="
-        + st.secrets["username"]
-        + ";PWD="
-        + st.secrets["password"]
+        # Uncomment for testing
+        #f"DRIVER={st.secrets['driver_path']};"
+        "DRIVER={ODBC Driver 18 for SQL Server};"
+        f"SERVER={st.secrets['server']};"
+        f"DATABASE={st.secrets['database']};"
+        f"UID={st.secrets['username']};"
+        f"PWD={st.secrets['password']};"
+        "Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
     )
 
 conn = init_connection()
