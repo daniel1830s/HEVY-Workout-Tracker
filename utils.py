@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 import requests
+import streamlit as st
 
 load_dotenv()
 
@@ -118,9 +119,7 @@ def convert_times(df):
 # Helper function to get number of workouts to determine how many pages to fetch
 def get_workout_count():
     # Declare environment variables
-    API_KEY = os.getenv('HEVY_API_KEY')
-    UID = os.getenv('UID')
-    PSWD = os.getenv('PSWD')
+    API_KEY = st.secrets['hevy_api_key']
 
     # Initialize HEVY API setup
     headers = {
