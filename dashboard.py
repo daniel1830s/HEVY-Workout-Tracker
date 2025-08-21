@@ -8,6 +8,7 @@ import altair as alt
 import plotly.express as px
 import plotly.io as pio
 from datetime import datetime
+from zoneinfo import ZoneInfo
 pio.templates.default = "plotly_dark"
 
 # Comment this out before deploying
@@ -81,6 +82,7 @@ most_recent_query = """
         workouts.workout_duration
     FROM workouts
     JOIN MostRecent ON workouts.workout_id = MostRecent.workout_id
+    ORDER BY workouts.start_time ASC
 """
 
 past_workouts_query = """
@@ -155,6 +157,9 @@ with col1:
     scrollable_html += "<h3><em>Most Recent Workout</em></h3>"
     # Convert the date to separate parts, date and time
     dt = datetime.strptime(most_recent_workout.iloc[0]['StartTime'], "%m/%d/%Y %I.%M %p")
+    # Adjust the time zone to EST
+    dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    dt = dt.astimezone(ZoneInfo("America/New_York"))
     # Part for the date
     date_part = f"{dt.month}/{dt.day}/{dt.year}"
     hour_12 = dt.hour % 12
