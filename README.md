@@ -22,7 +22,7 @@ The web-app is hosted on: https://weightlifting.streamlit.app/
 * Packages:
 
   ```bash
-  pip install pandas numpy requests pyodbc python-dotenv schedule seaborn matplotlib
+  pip install pandas numpy requests pyodbc python-dotenv schedule plotly streamlit statsmodel
   ```
 * An Azure SQL Database instance
 * HEVY API key
@@ -37,6 +37,7 @@ Create a `.env` file in the project root with the following:
 HEVY_API_KEY=your_hevy_api_key
 UID=your_database_username
 PSWD=your_database_password
+GMAIL_PASSWORD="your gmai lpas swor"
 ```
 
 ---
@@ -59,23 +60,7 @@ This will:
 
 ---
 
-### **2. Perform EDA in a Jupyter Notebook**
-
-* Import your cleaning functions and fetch data:
-
-```python
-import pandas as pd
-from utils import get_all_workouts, clean_workouts
-
-workouts = get_all_workouts()
-cleaned_workouts = clean_workouts(workouts)
-```
-
-* Perform plots and analysis, e.g., average workout duration, sets/reps per exercise, etc.
-
----
-
-### **3. Schedule daily execution**
+### **Schedule daily execution**
 
 Use `schedule` library:
 
@@ -83,21 +68,6 @@ Use `schedule` library:
 python run_daily.py
 ```
 
-Example scheduler in `run_daily.py`:
-
-```python
-import schedule
-import time
-from pipeline import run_pipeline
-
-schedule.every().day.at("06:00").do(run_pipeline)
-
-while True:
-    schedule.run_pending()
-    time.sleep(60)
-```
-
-* Adjust the time as needed.
 * Run in background:
 
   ```bash
@@ -106,22 +76,25 @@ while True:
 
 ---
 
-### **4. Database Table Schema**
+### **Database Table Schema**
 
 After preprocessing, the table `workouts` will have:
 
-| Column Name      | Type          |
-| ---------------- | ------------- |
-| workout\_id      | INT           |
-| workout\_title   | NVARCHAR(MAX) |
-| workout\_type    | NVARCHAR(MAX) |
-| start\_time      | DATETIME      |
-| end\_time        | DATETIME      |
-| exercise\_title  | NVARCHAR(MAX) |
-| exercise\_notes  | NVARCHAR(MAX) |
-| set\_index       | INT           |
-| set\_weight\_lbs | FLOAT         |
-| set\_reps        | INT           |
+| Column Name       | Type          |
+| ----------------- | ------------- |
+| workout\_id       | INT           |
+| workout\_type     | NVARCHAR(MAX) |
+| start\_time       | DATETIME      |
+| end\_time         | DATETIME      |
+| exercise\_title   | NVARCHAR(MAX) |
+| exercise\_notes   | NVARCHAR(MAX) |
+| set\_index        | INT           |
+| set\_weight\_lbs  | FLOAT         |
+| set\_reps         | INT           |
+| workout\_type     | NVARCHAR(MAX) |
+| volume            | FLOAT         |
+| workout\_duration | FLOAT         |
+| weight\_score     | FLOAT         |
 
 ---
 
