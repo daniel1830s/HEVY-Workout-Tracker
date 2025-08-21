@@ -15,11 +15,6 @@ from utils import convert_times
 
 '''
 
-def list_odbc_drivers():
-    st.write("Available ODBC Drivers:", pyodbc.drivers())
-
-list_odbc_drivers()
-
 # Uncomment for testing
 # driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
 
@@ -41,7 +36,7 @@ def init_connection():
     return pyodbc.connect(
         # Uncomment for testing
         #f"DRIVER={st.secrets['driver_path']};"
-        "DRIVER={ODBC Driver 18 for SQL Server};"
+        "DRIVER={ODBC Driver 17 for SQL Server};"
         f"SERVER={st.secrets['server']};"
         f"DATABASE={st.secrets['database']};"
         f"UID={st.secrets['username']};"
