@@ -3,7 +3,7 @@ import requests
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from utils import connect_to_db, clean_workouts, get_workout_count, send_email
+from utils import connect_to_db, clean_workouts, get_workout_count, send_email, get_row_count
 
 load_dotenv()
 
@@ -115,31 +115,46 @@ def create_table(conn, df: pd.DataFrame):
 
 def insert_sql(conn, df: pd.DataFrame):
     cursor = conn.cursor()
-    rows_added = 0
 
     try:
         # Loop through the dataframe and insert the rows into our table
         # Create placeholders (as good practice to avoid SQL injection threats)
-        placeholders = ', '.join(['?'] * len(df.columns))
+        insert_placeholders = ', '.join(['?'] * len(df.columns))
+        dup_check_placeholders = ' AND '.join([f"{col} = ?" for col in ['workout_id', 'exercise_title', 'set_index']])
         # Prepare column names
         columns = ', '.join([f"[{col}]" for col in df.columns])
         # Generate insert query
-        insert_query = f"INSERT INTO workouts ({columns}) VALUES ({placeholders})"
+        insert_query = f"""
+        INSERT INTO workouts ({columns})
+        SELECT {insert_placeholders}
+        WHERE NOT EXISTS (
+            SELECT 1 FROM workouts
+            WHERE {dup_check_placeholders}
+        )
+        """
+        # Prepare values to be inserted into the database
+        values = []
+        for row in df.to_numpy():
+            row_tuple = tuple(row)
+            # Construct primary key to be used in duplicate check
+            workout_id = row[df.columns.get_loc("workout_id")]
+            exercise_title = row[df.columns.get_loc("exercise_title")]
+            set_index = row[df.columns.get_loc("set_index")]
+            # Append everything to values for the insert query
+            values.append(row_tuple + (workout_id, exercise_title, set_index))
+
         # Change cursor settings to execute many rows fast
         cursor.fast_executemany = True
         # Execute the query with the current row's data
-        cursor.executemany(insert_query, [tuple(row) for row in df.to_numpy()])
+        cursor.executemany(insert_query, values)
         # Return the number of rows added
-        rows_added = cursor.rowcount
         conn.commit()
-
-        print(f"Successfully inserted {rows_added} rows.")
+        print(f"Successfully inserted data.")
 
     except Exception as e:
         print("Error in connection:", e)
     finally:
         cursor.close()
-        return rows_added
         # Do not close connection here, it is closed in run_pipeline
 
 def run_pipeline():
@@ -153,13 +168,21 @@ def run_pipeline():
     conn = connect_to_db()
     if conn is None:
         print("Failed to connect to the database.")
-        return    
+        return
 
     # Create the workouts table
     create_table(conn, cleaned_workouts)
 
+    # Get the row count before insertion
+    initial_row_count = get_row_count(conn)
+
     # Insert data into the workouts table
-    rows_added = insert_sql(conn, cleaned_workouts)
+    insert_sql(conn, cleaned_workouts)
+
+    # Get the row count after insertion
+    final_row_count = get_row_count(conn)
+
+    rows_added = final_row_count - initial_row_count
 
     # Send an email to notify of successful DB update
     send_email(rows_added)
