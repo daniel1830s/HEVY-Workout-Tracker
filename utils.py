@@ -115,7 +115,7 @@ def convert_times(df):
     df['end_time'] = pd.to_datetime(df['end_time']).dt.tz_localize(None)
     return df
 
-# Function to get number of workouts to determine how many pages to fetch
+# Helper function to get number of workouts to determine how many pages to fetch
 def get_workout_count():
     # Declare environment variables
     API_KEY = os.getenv('HEVY_API_KEY')
@@ -136,3 +136,27 @@ def get_workout_count():
         return 0
     data = response.json()
     return data['workout_count']
+
+# Helper function determine the % change in workouts between past month and previous month
+def get_percent_and_delta(past_workouts):
+    # Get the past and previous month workout counts
+    past_month = past_workouts.loc[0, 'past_month']
+    prev_month = past_workouts.loc[0, 'prev_month']
+
+    percent_change = 0.0
+    delta_label = ""
+    # If there were no workouts in the previous month
+    if prev_month == 0:
+        # We are 100% up unless
+        if past_month > 0:
+            percent_change = 100.0
+            delta_label = "100% up"
+        # No workouts in the past month in which case both are 0
+        else:
+            percent_change = 0.0
+            delta_label = "0%"
+    else:
+        # Otherwise calculate normally
+        percent_change = ((past_month - prev_month) / prev_month) * 100
+        delta_label = f"{percent_change:.1f}%"
+    return percent_change, delta_label
