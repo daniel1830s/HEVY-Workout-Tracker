@@ -4,4 +4,4 @@ pyodbc
 python-dotenv
 matplotlib
 seaborn
-altair
+plotly
