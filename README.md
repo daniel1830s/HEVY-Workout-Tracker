@@ -2,6 +2,8 @@
 
 This project fetches workout data from the HEVY API, processes it, and stores it in an Azure SQL Database. It also allows you to perform exploratory data analysis (EDA) and schedule the pipeline to run automatically.
 
+The web-app is hosted on: https://weightlifting.streamlit.app/
+
 ---
 
 ## **Features**
