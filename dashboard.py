@@ -11,7 +11,7 @@ from datetime import datetime
 pio.templates.default = "plotly_dark"
 
 # Comment this out before deploying
-#driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
+# driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
 
 ############################################################################################
                                     # Page/DB Config #
@@ -150,7 +150,7 @@ col1, col2 = st.columns(2)
 with col1:
     # Most Recent Workout
     # Create HTML string to be able to scroll through the results
-    scrollable_html = '<div style="height: 400px; overflow-y: scroll;">'
+    scrollable_html = '<div style="height: 465px; overflow-y: scroll;">'
     # Add the header
     scrollable_html += "<h3><em>Most Recent Workout</em></h3>"
     # Convert the date to separate parts, date and time
@@ -183,6 +183,10 @@ with col1:
         x="start_time",
         y="volume",
         title="Total Workout Volume Over Time",
+        labels={
+            "start_time": "Workout Date",
+            "volume": "Volume (lbs)", 
+        }
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -203,7 +207,12 @@ with col2:
         y="set_weight_lbs",
         color="exercise_title",
         title="Weight Progression for Top Exercises",
-        trendline="ols"
+        trendline="ols",
+        labels={
+            "start_time": "Workout Date",
+            "set_weight_lbs": "Weight (lbs)",
+            "exercise_title": "Exercise"
+        }
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -213,6 +222,10 @@ with col2:
         x="start_time",
         y="workout_duration",
         title="Workout Duration Over Time",
+        labels={
+            "start_time": "Workout Date",
+            "workout_duration": "Duration (minutes)",
+        }
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -221,7 +234,10 @@ with col2:
         filtered_df,
         x="workout_duration",
         nbins=20,
-        title="Distribution of Workout Duration (minutes)",
-        template="plotly_dark"
+        title="Distribution of Workout Duration",
+        template="plotly_dark",
+        labels={
+            "workout_duration": "Duration (minutes)",
+        }
     )
     st.plotly_chart(fig, use_container_width=True)
