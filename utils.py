@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 import pandas as pd
 import requests
 import streamlit as st
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 load_dotenv()
 
@@ -156,3 +159,28 @@ def get_count_and_delta(past_workouts):
         percent_change = ((past_month - prev_month) / prev_month) * 100
         delta_label = f"{percent_change:.1f}%"
     return past_month, delta_label
+
+# Helper function to send email notification when pipeline is ran
+def send_email(rows_added):
+    email = "daniel.1830.s@gmail.com"
+    password = os.getenv('GMAIL_PASSWORD')
+    msg = MIMEMultipart()
+    msg['From'] = email
+    msg['To'] = email
+    msg['Subject'] = "Pipeline Run Succeeded! 🎉"
+    if rows_added > 0:
+        body = f"{rows_added} rows were added to the database ✅"
+    else:
+        body = "No new rows were added to the database ❌ Maybe you forgot to work out yesterday?"
+    msg.attach(MIMEText(body, 'plain'))
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(email, password)
+        text = msg.as_string()
+        server.sendmail(email, email, text)
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+    finally:
+        server.quit()
