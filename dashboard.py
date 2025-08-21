@@ -3,7 +3,7 @@ import pandas as pd
 import pyodbc
 #import seaborn as sns
 #import matplotlib.pyplot as plt
-from utils import connect_to_db, convert_times
+from utils import convert_times
 
 # The following Azure SQL Connection code is adapted from Streamlit's documentation on MS SQL:
 # https://docs.streamlit.io/develop/tutorials/databases/mssql
@@ -48,10 +48,18 @@ st.title("Workout Dashboard")
 start_date, end_date = st.date_input("Date range", [df['start_time'].min(), df['start_time'].max()])
 filtered_df = df[(df['start_time'] >= pd.to_datetime(start_date)) & (df['start_time'] <= pd.to_datetime(end_date))]
 
-# Average workout duration
+# Calculate workout duration
 filtered_df['workout_duration'] = (filtered_df['end_time'] - filtered_df['start_time']).dt.total_seconds() / 60
+# Calculate volume
+filtered_df['volume'] = filtered_df['set_weight_lbs'] * filtered_df['set_reps']
+
+# Calculate average workout duration
 avg_duration = filtered_df.groupby(filtered_df['start_time'].dt.date)['workout_duration'].mean()
 st.line_chart(avg_duration)
+
+# Calculate average volume by exercise type
+avg_volume = filtered_df.groupby('exercise_title')['volume'].mean()
+st.bar_chart(avg_volume)
 
 # Workout type distribution
 workout_counts = filtered_df['workout_type'].value_counts()
