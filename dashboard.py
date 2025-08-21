@@ -11,7 +11,7 @@ from datetime import datetime
 pio.templates.default = "plotly_dark"
 
 # Comment this out before deploying
-# driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
+driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
 
 ############################################################################################
                                     # Page/DB Config #
@@ -33,9 +33,9 @@ st.set_page_config(
 def init_connection():
     return pyodbc.connect(
         # Uncomment for testing
-        #f"DRIVER={{{driver_path}}};"
+        f"DRIVER={{{driver_path}}};"
         # Uncomment for deployment
-        "DRIVER={ODBC Driver 17 for SQL Server};"
+        #"DRIVER={ODBC Driver 17 for SQL Server};"
         f"SERVER={st.secrets['server']};"
         f"DATABASE={st.secrets['database']};"
         f"UID={st.secrets['username']};"
@@ -196,22 +196,23 @@ with col1:
     st.plotly_chart(fig, use_container_width=True)
 # Second column
 with col2:
+    # Line Chart: Progression of Top Exercises Over Time
+    fig = px.scatter(
+        progression,
+        x="start_time",
+        y="set_weight_lbs",
+        color="exercise_title",
+        title="Weight Progression for Top Exercises",
+        trendline="ols"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
     # Line Chart: Workout duration over time
     fig = px.line(
         avg_duration.reset_index(),
         x="start_time",
         y="workout_duration",
         title="Workout Duration Over Time",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Line Chart: Progression of Top Exercises Over Time
-    fig = px.line(
-        progression,
-        x="start_time",
-        y="weight_score",
-        color="exercise_title",
-        title="Weight Progression for Top Exercises",
     )
     st.plotly_chart(fig, use_container_width=True)
 
