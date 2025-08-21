@@ -184,3 +184,16 @@ def send_email(rows_added):
         print(f"Failed to send email: {e}")
     finally:
         server.quit()
+
+# Helper function to get the number of rows in the database
+def get_row_count(conn):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT COUNT(*) FROM workouts")
+        count = cursor.fetchone()[0]
+        return count
+    except Exception as e:
+        print(f"Error fetching row count: {e}")
+        return 0
+    finally:
+        cursor.close()
