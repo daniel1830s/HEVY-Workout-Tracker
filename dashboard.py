@@ -148,34 +148,6 @@ col1, col2 = st.columns(2)
 
 # First column
 with col1:
-    # Line Chart: Workout duration over time
-    fig = px.line(
-        avg_duration.reset_index(),
-        x="start_time",
-        y="workout_duration",
-        title="Workout Duration Over Time",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Bar Chart: Workout Volume Over Time
-    fig = px.bar(
-        volume_over_time,
-        x="start_time",
-        y="volume",
-        title="Total Workout Volume Over Time",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Pie Chart: Total volumne by workout type
-    fig = px.pie(
-        exercise_volume,
-        names="workout_type",
-        values="volume",
-        title="Proportion of Total Volume by Exercise",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-# Second column
-with col2:
     # Most Recent Workout
     # Create HTML string to be able to scroll through the results
     scrollable_html = '<div style="height: 400px; overflow-y: scroll;">'
@@ -204,6 +176,34 @@ with col2:
     # Close the HTML div
     scrollable_html += "</div>"
     st.markdown(scrollable_html, unsafe_allow_html=True)
+
+    # Bar Chart: Workout Volume Over Time
+    fig = px.bar(
+        volume_over_time,
+        x="start_time",
+        y="volume",
+        title="Total Workout Volume Over Time",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Pie Chart: Total volumne by workout type
+    fig = px.pie(
+        exercise_volume,
+        names="workout_type",
+        values="volume",
+        title="Proportion of Total Volume by Exercise",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+# Second column
+with col2:
+    # Line Chart: Workout duration over time
+    fig = px.line(
+        avg_duration.reset_index(),
+        x="start_time",
+        y="workout_duration",
+        title="Workout Duration Over Time",
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
     # Line Chart: Progression of Top Exercises Over Time
     fig = px.line(
