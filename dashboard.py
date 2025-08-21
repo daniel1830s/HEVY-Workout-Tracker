@@ -82,7 +82,7 @@ most_recent_query = """
         workouts.workout_duration
     FROM workouts
     JOIN MostRecent ON workouts.workout_id = MostRecent.workout_id
-    ORDER BY workouts.start_time ASC
+    ORDER BY workouts.exercise_index ASC
 """
 
 past_workouts_query = """

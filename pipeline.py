@@ -61,6 +61,7 @@ def get_all_workouts():
             end_time = workout['end_time']
             # For each exercise in the workout
             for exercise in workout['exercises']:
+                exercise_index = exercise['index']
                 exercise_title = exercise['title']
                 exercise_notes = exercise['notes']
                 # For each set in the exercise
@@ -75,6 +76,7 @@ def get_all_workouts():
                         "workout_title": workout_title,
                         "start_time": start_time,
                         "end_time": end_time,
+                        "exercise_index": exercise_index,
                         "exercise_title": exercise_title,
                         "exercise_notes": exercise_notes,
                         "set_index": set_index,
