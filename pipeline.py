@@ -3,7 +3,7 @@ import requests
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from utils import connect_to_db, clean_workouts
+from utils import connect_to_db, clean_workouts, get_workout_count
 
 load_dotenv()
 
@@ -29,15 +29,6 @@ headers = {
 }
 
 base_url = "https://api.hevyapp.com/v1"
-
-# Function to get number of workouts to determine how many pages to fetch
-def get_workout_count():
-    response = requests.get(f"{base_url}/workouts/count", headers=headers)
-    if response.status_code != 200:
-        print(f"Error fetching workout count: {response.status_code}")
-        return 0
-    data = response.json()
-    return data['workout_count']
 
 # Function to fetch all workouts from HEVY API
 def get_all_workouts():
