@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 pio.templates.default = "plotly_dark"
 
 # Comment this out before deploying
-# driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
+driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
 
 ############################################################################################
                                     # Page/DB Config #
@@ -34,9 +34,9 @@ st.set_page_config(
 def init_connection():
     return pyodbc.connect(
         # Uncomment for testing
-        #f"DRIVER={{{driver_path}}};"
+        f"DRIVER={{{driver_path}}};"
         # Uncomment for deployment
-        "DRIVER={ODBC Driver 17 for SQL Server};"
+        #"DRIVER={ODBC Driver 17 for SQL Server};"
         f"SERVER={st.secrets['server']};"
         f"DATABASE={st.secrets['database']};"
         f"UID={st.secrets['username']};"
@@ -93,12 +93,19 @@ past_workouts_query = """
     FROM
         workouts
 """
-
+# Run queries for most recent and past workouts
 most_recent_workout = run_query(most_recent_query)
-most_recent_work = most_recent_workout.sort_values(by='exercise_index', ascending=True)
 past_workouts = run_query(past_workouts_query)
+# Get the count of workouts in the past month and the delta from the previous month
 past_month_workout_count, delta_label = get_count_and_delta(past_workouts)
-
+# Get total workouts
+total_workouts = get_workout_count()
+# Calculate average weekly workouts
+df['start_time'] = pd.to_datetime(df['start_time'])
+df['year'] = df['start_time'].dt.year
+# Extract week #
+df['week'] = df['start_time'].dt.isocalendar().week
+weekly_counts = df.groupby(['year', 'week'])['workout_id'].nunique()
 profile_pic_url = "https://d2l9nsnmtah87f.cloudfront.net/profile-images/dstorms-0af3c61a-c892-4a2c-9ad6-946589ad2789.jpg"
 
 ############################################################################################
@@ -110,15 +117,17 @@ with col3:
     st.image(profile_pic_url, width=120, caption=f":green[**[Hevy Profile](https://hevy.com/user/dstorms)**] 🏋️‍♂️")
 with col4:
     st.title("Daniel's Workout Dashboard")
-    col41, col42= st.columns([3, 2])
+    col41, col42, col43= st.columns([2, 2, 2])
     with col41:
-        st.metric(label="Total Workouts 💪", value=get_workout_count())
+        st.metric(label="Total Workouts 💪", value=total_workouts)
     with col42:
         st.metric(
             label="Workouts Past Month 📅",
             value=past_month_workout_count,
             delta=delta_label
         )
+    with col43:
+        st.metric(label="Average Weekly Workouts", value=round(weekly_counts.mean(), 1))
 
 ############################################################################################
                                     # Data Manipulation #
