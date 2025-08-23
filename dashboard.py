@@ -44,8 +44,8 @@ def init_connection():
 conn = init_connection()
 
 # Perform query.
-# Uses st.cache_data to only rerun when the query changes or after 10 min.
-@st.cache_data(ttl=600)
+# Uses st.cache_data to only rerun when the query changes or after 24 hours.
+@st.cache_data(ttl=86400)
 def run_query(query):
     return pd.read_sql_query(query, conn)
 
