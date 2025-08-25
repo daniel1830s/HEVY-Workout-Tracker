@@ -3,7 +3,7 @@ import requests
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from utils import connect_to_db, clean_workouts, get_workout_count, send_email, get_row_count
+from utils import connect_to_db, clean_workouts, get_workout_count, send_email, get_row_count, save_table_to_csv
 
 load_dotenv()
 
@@ -180,6 +180,9 @@ def run_pipeline():
 
     # Insert data into the workouts table
     insert_sql(conn, cleaned_workouts)
+
+    # Save a backup of the table as CSV incase of DB issues
+    save_table_to_csv(conn)
 
     # Get the row count after insertion
     final_row_count = get_row_count(conn)

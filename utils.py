@@ -197,3 +197,20 @@ def get_row_count(conn):
         return 0
     finally:
         cursor.close()
+
+def save_table_to_csv(conn):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM workouts")
+        rows = cursor.fetchall()
+        if not rows:
+            print("No data found in the workouts table")
+            return
+        columns = [column[0] for column in cursor.description]
+        df = pd.DataFrame.from_records(rows, columns=columns)
+        df.to_csv("workouts_backup.csv", index=False)
+        print("Workouts table saved to workouts_backup.csv")
+    except Exception as e:
+        print(f"Error saving workouts table to CSV: {e}")
+    finally:
+        cursor.close()
