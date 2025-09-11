@@ -9,6 +9,7 @@ import plotly.express as px
 import plotly.io as pio
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import psycopg2
 pio.templates.default = "plotly_dark"
 
 ############################################################################################
@@ -29,17 +30,13 @@ st.set_page_config(
 
 @st.cache_resource
 def init_connection():
-    return pyodbc.connect(
-        # Uncomment for testing
-        #f"DRIVER={{/opt/homebrew/lib/libmsodbcsql.18.dylib}};"
-        # Uncomment for deployment
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        f"SERVER={st.secrets['server']};"
-        f"DATABASE={st.secrets['database']};"
-        f"UID={st.secrets['username']};"
-        f"PWD={st.secrets['password']};"
-        "Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-    )
+    return psycopg2.connect(
+            host='localhost',
+            database='airflow',
+            user='daniel',
+            password='postgres',
+            port=5432
+        )
 
 conn = init_connection()
 

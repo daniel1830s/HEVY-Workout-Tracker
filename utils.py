@@ -1,4 +1,3 @@
-import pyodbc
 import os
 from dotenv import load_dotenv
 import pandas as pd
@@ -7,6 +6,7 @@ import streamlit as st
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import psycopg2
 
 load_dotenv()
 
@@ -24,23 +24,14 @@ in my pipeline)
 # Helper function to connect to my Azure SQL DB
 def connect_to_db():
     # Setting up DB conection
-    driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
-    server = "tcp:stormsdb.database.windows.net,1433"
-    database = "DanielDB"
-    UID = os.getenv('UID')
-    PSWD = os.getenv('PSWD')
-
     try:
         # Connection string for my Azure SQL Database
-        conn = pyodbc.connect(
-            f"DRIVER={{{driver_path}}};"
-            f"SERVER={server};"
-            f"DATABASE={database};"
-            f"UID={UID};"
-            f"PWD={PSWD};"
-            "Encrypt=yes;"
-            "TrustServerCertificate=no;"
-            "Connection Timeout=30;"
+        conn = psycopg2.connect(
+            host='localhost',
+            database='airflow',
+            user='daniel',
+            password='postgres',
+            port=5432
         )
         return conn
     except Exception as e:

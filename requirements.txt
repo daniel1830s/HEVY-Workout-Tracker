@@ -1,8 +1,9 @@
 pandas
 streamlit
-pyodbc
+psycopg2
 python-dotenv
 matplotlib
 seaborn
 plotly
 statsmodels
+apache-airflow

@@ -2,6 +2,7 @@ import os
 import requests
 import numpy as np
 import pandas as pd
+from psycopg2 import sql
 from dotenv import load_dotenv
 from utils import connect_to_db, clean_workouts, get_workout_count, send_email, get_row_count, save_table_to_csv
 
@@ -19,8 +20,6 @@ and store them in an Azure SQL Database.
 
 # Declare environment variables
 API_KEY = os.getenv('HEVY_API_KEY')
-UID = os.getenv('UID')
-PSWD = os.getenv('PSWD')
 
 # Initialize HEVY API setup
 headers = {
@@ -93,26 +92,28 @@ def create_table(conn, df: pd.DataFrame):
     categorical_cols = df.select_dtypes(include=['object']).columns.tolist()
 
     # Join the columns
-    columns = ', '.join(
-        [f"[{col}] NVARCHAR(MAX)" if col in categorical_cols
-         else f"[{col}] FLOAT" if col in float_cols
-         else f"[{col}] INT" if col in int_cols
-         else f"[{col}] NVARCHAR(MAX)" # Default to string
-         for col in df.columns]
-    )
+    fields = []
+    for col in df.columns:
+        if col in categorical_cols:
+            col_type = "TEXT"
+        elif col in float_cols:
+            col_type = "DOUBLE PRECISION"
+        elif col in int_cols:
+            col_type = "INTEGER"
+        else:
+            col_type = "TEXT"
+        fields.append(sql.SQL( "{} {}" ).format(sql.Identifier(col), sql.SQL(col_type)))
+
     try:
     # Check if the table exists already and if not create it with the columns listed above
-        create_table_query = f"""
-            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='workouts')
-            CREATE TABLE workouts ({columns})
-        """
-
+        create_table_query = sql.SQL("CREATE TABLE IF NOT EXISTS workouts ({fields});").format(
+            fields=sql.SQL(', ').join(fields)
+        )
         cursor.execute(create_table_query)
         conn.commit()
     except Exception as e:
         print("Error creating table:", e)
-    finally:
-        cursor.close()
+        conn.rollback()
         # Do not close connection here, it is closed in run_pipeline
 
 def insert_sql(conn, df: pd.DataFrame):
@@ -121,32 +122,23 @@ def insert_sql(conn, df: pd.DataFrame):
     try:
         # Loop through the dataframe and insert the rows into our table
         # Create placeholders (as good practice to avoid SQL injection threats)
-        insert_placeholders = ', '.join(['?'] * len(df.columns))
-        dup_check_placeholders = ' AND '.join([f"{col} = ?" for col in ['workout_id', 'exercise_title', 'set_index']])
+        placeholders = ', '.join(['%s'] * len(df.columns))
         # Prepare column names
-        columns = ', '.join([f"[{col}]" for col in df.columns])
+        columns = ', '.join([f"{col}" for col in df.columns])
+        # Prepare primary key
+        pk = ', '.join(['workout_id', 'exercise_title', 'set_index'])
         # Generate insert query
-        insert_query = f"""
-        INSERT INTO workouts ({columns})
-        SELECT {insert_placeholders}
-        WHERE NOT EXISTS (
-            SELECT 1 FROM workouts
-            WHERE {dup_check_placeholders}
-        )
-        """
+        insert_query = sql.SQL("""
+                INSERT INTO workouts ({columns})
+                VALUES ({placeholders})
+                ON CONFLICT ({pk}) DO NOTHING
+            """).format(
+                columns=sql.SQL(columns),
+                placeholders=sql.SQL(placeholders),
+                pk = sql.SQL(pk)
+                )
         # Prepare values to be inserted into the database
-        values = []
-        for row in df.to_numpy():
-            row_tuple = tuple(row)
-            # Construct primary key to be used in duplicate check
-            workout_id = row[df.columns.get_loc("workout_id")]
-            exercise_title = row[df.columns.get_loc("exercise_title")]
-            set_index = row[df.columns.get_loc("set_index")]
-            # Append everything to values for the insert query
-            values.append(row_tuple + (workout_id, exercise_title, set_index))
-
-        # Change cursor settings to execute many rows fast
-        cursor.fast_executemany = True
+        values = [tuple(row) for row in df.to_numpy()]
         # Execute the query with the current row's data
         cursor.executemany(insert_query, values)
         # Return the number of rows added
@@ -155,6 +147,7 @@ def insert_sql(conn, df: pd.DataFrame):
 
     except Exception as e:
         print("Error in connection:", e)
+        conn.rollback()
     finally:
         cursor.close()
         # Do not close connection here, it is closed in run_pipeline
@@ -190,7 +183,7 @@ def run_pipeline():
     rows_added = final_row_count - initial_row_count
 
     # Send an email to notify of successful DB update
-    send_email(rows_added)
+    #send_email(rows_added)
 
     conn.close()
     
