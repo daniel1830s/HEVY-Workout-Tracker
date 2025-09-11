@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import pyodbc
 #import seaborn as sns
 #import matplotlib.pyplot as plt
 from utils import convert_times, get_workout_count, get_count_and_delta

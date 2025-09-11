@@ -29,5 +29,8 @@
   },
   "forwardPorts": [
     8501
+  ],
+  "mounts": [
+    "source=/Users/daniel/Downloads/workout-tracker/airflow/dags,target=/opt/airflow/dags,type=bind"
   ]
 }
