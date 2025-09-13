@@ -27,10 +27,10 @@ def connect_to_db():
     try:
         # Connection string for my Azure SQL Database
         conn = psycopg2.connect(
-            host='127.0.0.1',
-            database='daniel',
-            user='daniel',
-            password='postgres',
+            host=os.getenv('HOST'),
+            database=os.getenv('DATABASE'),
+            user=os.getenv('USER'),
+            password=os.getenv('PASSWORD'),
             port=5432
         )
         return conn
