@@ -86,16 +86,16 @@ def get_all_workouts():
 
 def create_table(conn, df: pd.DataFrame):
     cursor = conn.cursor()
-    # Determine which columns will be strings/floats
+    # Determine which columns will be strings/floats/datetime
     int_cols = df.select_dtypes(include=['int64']).columns.tolist()
     float_cols = df.select_dtypes(include=['float64']).columns.tolist()
-    categorical_cols = df.select_dtypes(include=['object']).columns.tolist()
+    time_cols = ['start_time', 'end_time']
 
     # Join the columns
     fields = []
     for col in df.columns:
-        if col in categorical_cols:
-            col_type = "TEXT"
+        if col in time_cols:
+            col_type = "TIMESTAMP"
         elif col in float_cols:
             col_type = "DOUBLE PRECISION"
         elif col in int_cols:
@@ -106,8 +106,13 @@ def create_table(conn, df: pd.DataFrame):
 
     try:
     # Check if the table exists already and if not create it with the columns listed above
-        create_table_query = sql.SQL("CREATE TABLE IF NOT EXISTS workouts ({fields});").format(
-            fields=sql.SQL(', ').join(fields)
+        create_table_query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS workouts (
+                {fields},
+                PRIMARY KEY ({pk})
+            );""").format(
+            fields=sql.SQL(', ').join(fields),
+            pk=sql.SQL(', '.join(['workout_id', 'exercise_title', 'set_index']))
         )
         cursor.execute(create_table_query)
         conn.commit()
@@ -151,8 +156,8 @@ def insert_sql(conn, df: pd.DataFrame):
     finally:
         cursor.close()
         # Do not close connection here, it is closed in run_pipeline
-
-def run_pipeline():
+    
+if __name__ == "__main__":
     # Fetch the workouts from the API
     workouts = get_all_workouts()
 
@@ -163,29 +168,10 @@ def run_pipeline():
     conn = connect_to_db()
     if conn is None:
         print("Failed to connect to the database.")
-        return
+        exit(1)
 
     # Create the workouts table
     create_table(conn, cleaned_workouts)
 
-    # Get the row count before insertion
-    initial_row_count = get_row_count(conn)
-
-    # Insert data into the workouts table
-    insert_sql(conn, cleaned_workouts)
-
-    # Save a backup of the table as CSV incase of DB issues
-    save_table_to_csv(conn)
-
-    # Get the row count after insertion
-    final_row_count = get_row_count(conn)
-
-    rows_added = final_row_count - initial_row_count
-
-    # Send an email to notify of successful DB update
-    #send_email(rows_added)
-
+    # Close the connection
     conn.close()
-    
-if __name__ == "__main__":
-    run_pipeline()

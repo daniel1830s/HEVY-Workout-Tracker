@@ -28,7 +28,7 @@ def connect_to_db():
         # Connection string for my Azure SQL Database
         conn = psycopg2.connect(
             host='localhost',
-            database='airflow',
+            database='daniel',
             user='daniel',
             password='postgres',
             port=5432
@@ -71,8 +71,8 @@ def clean_workouts(df):
     df['volume'] = df['set_weight_lbs'] * df['set_reps']
 
     # Create a workout duration column in minutes
-    df['start_time'] = pd.to_datetime(df['start_time'])
-    df['end_time'] = pd.to_datetime(df['end_time'])
+    df['start_time'] = pd.to_datetime(df['start_time'], errors='coerce')
+    df['end_time'] = pd.to_datetime(df['end_time'], errors='coerce')
     df['workout_duration'] = (df['end_time'] - df['start_time']).dt.total_seconds() / 60
 
     # Remove outliers from set weight lbs
@@ -106,8 +106,9 @@ def clean_workouts(df):
 # Helper function to convert start and end times to datetime objects
 def convert_times(df):
     df = df.copy()
-    df['start_time'] = pd.to_datetime(df['start_time']).dt.tz_localize(None)
-    df['end_time'] = pd.to_datetime(df['end_time']).dt.tz_localize(None)
+    df['start_time'] = pd.to_datetime(df['start_time'], errors='coerce').dt.tz_localize(None)
+    df['end_time'] = pd.to_datetime(df['end_time'], errors='coerce').dt.tz_localize(None)
+    df.dropna(subset=['start_time', 'end_time'], inplace=True)
     return df
 
 # Helper function to get number of workouts to determine how many pages to fetch

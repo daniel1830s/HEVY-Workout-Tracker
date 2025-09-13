@@ -31,7 +31,7 @@ st.set_page_config(
 def init_connection():
     return psycopg2.connect(
             host='localhost',
-            database='airflow',
+            database='daniel',
             user='daniel',
             password='postgres',
             port=5432
@@ -52,22 +52,17 @@ df = convert_times(df)
 
 most_recent_query = """
     WITH MostRecent AS (
-        SELECT TOP 1 workout_id, CAST(start_time AS DATETIME) AS start_time, CAST(end_time AS DATETIME) AS end_time
-        FROM WORKOUTS
+        SELECT workout_id,
+            start_time::timestamp AS start_time,
+            end_time::timestamp AS end_time
+        FROM workouts
         ORDER BY start_time DESC
+        LIMIT 1
     )
 
     SELECT
-        CONCAT(
-            FORMAT(MostRecent.start_time, 'M/d/yyyy'),
-            ' ',
-            FORMAT(MostRecent.start_time, 'hh.mm tt')
-        ) AS StartTime,
-        CONCAT(
-            FORMAT(MostRecent.end_time, 'M/d/yyyy'),
-            ' ',
-            FORMAT(MostRecent.end_time, 'hh.mm tt')
-        ) AS EndTime,
+        to_char(MostRecent.start_time, 'MM/DD/YYYY hh.mi AM') AS starttime,
+        to_char(MostRecent.end_time, 'MM/DD/YYYY hh.mi AM') AS endtime,
         workouts.exercise_title,
         workouts.exercise_notes,
         workouts.set_weight_lbs,
@@ -76,15 +71,19 @@ most_recent_query = """
         workouts.exercise_index
     FROM workouts
     JOIN MostRecent ON workouts.workout_id = MostRecent.workout_id
-    ORDER BY workouts.exercise_index ASC
+    ORDER BY workouts.exercise_index ASC;
 """
 
 past_workouts_query = """
     SELECT
-        COUNT(DISTINCT CASE WHEN start_time >= DATEADD(day, -30, GETDATE()) THEN workout_id END) AS past_month,
-        COUNT(DISTINCT CASE WHEN start_time BETWEEN DATEADD(day, -60, GETDATE()) AND DATEADD(day, -30, GETDATE()) THEN workout_id END) AS prev_month
-    FROM
-        workouts
+        COUNT(DISTINCT CASE
+            WHEN start_time::timestamp >= CURRENT_DATE - INTERVAL '30 days'
+            THEN workout_id END) AS past_month,
+        COUNT(DISTINCT CASE
+            WHEN start_time::timestamp BETWEEN (CURRENT_DATE - INTERVAL '60 days')
+                                AND (CURRENT_DATE - INTERVAL '30 days')
+            THEN workout_id END) AS prev_month
+    FROM workouts;
 """
 # Run queries for most recent and past workouts
 most_recent_workout = run_query(most_recent_query)
@@ -94,7 +93,7 @@ past_month_workout_count, delta_label = get_count_and_delta(past_workouts)
 # Get total workouts
 total_workouts = get_workout_count()
 # Calculate average weekly workouts
-df['start_time'] = pd.to_datetime(df['start_time'])
+df['start_time'] = pd.to_datetime(df['start_time'], errors='coerce')
 df['year'] = df['start_time'].dt.year
 # Extract week #
 df['week'] = df['start_time'].dt.isocalendar().week
@@ -160,7 +159,7 @@ with col1:
     # Add the header
     scrollable_html += "<h3><em>Most Recent Workout</em></h3>"
     # Convert the date to separate parts, date and time
-    dt = datetime.strptime(most_recent_workout.iloc[0]['StartTime'], "%m/%d/%Y %I.%M %p")
+    dt = datetime.strptime(most_recent_workout.iloc[0]['starttime'], "%m/%d/%Y %I.%M %p")
     # Adjust the time zone to EST
     dt = dt.replace(tzinfo=ZoneInfo("UTC"))
     dt = dt.astimezone(ZoneInfo("America/New_York"))

@@ -7,3 +7,6 @@ seaborn
 plotly
 statsmodels
 apache-airflow
+asyncpg
+sqlalchemy
+apache-airflow-providers-postgres
