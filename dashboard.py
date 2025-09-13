@@ -30,7 +30,7 @@ st.set_page_config(
 @st.cache_resource
 def init_connection():
     return psycopg2.connect(
-            host='localhost',
+            host='127.0.0.1',
             database='daniel',
             user='daniel',
             password='postgres',

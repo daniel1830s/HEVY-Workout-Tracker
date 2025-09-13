@@ -27,7 +27,7 @@ def connect_to_db():
     try:
         # Connection string for my Azure SQL Database
         conn = psycopg2.connect(
-            host='localhost',
+            host='127.0.0.1',
             database='daniel',
             user='daniel',
             password='postgres',
