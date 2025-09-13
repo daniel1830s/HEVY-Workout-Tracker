@@ -27,23 +27,13 @@ st.set_page_config(
    initial_sidebar_state="expanded",
 )
 
-@st.cache_resource
-def init_connection():
-    return psycopg2.connect(
-            host=st.secrets['host'],
-            database=st.secrets['database'],
-            user=st.secrets['user'],
-            password=st.secrets['password'],
-            port=5432
-        )
-
-conn = init_connection()
+conn = st.connection("postgresql", type="sql")
 
 # Perform query.
 # Uses st.cache_data to only rerun when the query changes or after 24 hours.
 @st.cache_data(ttl=86400)
 def run_query(query):
-    return pd.read_sql_query(query, conn)
+    return conn.query(query)
 
 df = run_query("SELECT * FROM workouts;")
 df = convert_times(df)
