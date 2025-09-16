@@ -27,20 +27,31 @@ st.set_page_config(
    initial_sidebar_state="expanded",
 )
 
-conn = st.connection("postgresql", type="sql")
-
 # Perform query.
-# Uses st.cache_data to only rerun when the query changes or after 24 hours.
-@st.cache_data(ttl=86400)
-def run_query(query):
-    return conn.query(query)
+# Uses ttl=86400 to only rerun when the query changes or after 24 hours.
+@st.cache_resource(ttl=86400)
+def init_connection():
+    pg = st.secrets["connections"]["postgresql"]
+    return psycopg2.connect(
+        host=pg["host"],
+        port=pg["port"],
+        database=pg["database"],
+        user=pg["username"],
+        password=pg["password"]
+    )
 
-df = run_query("SELECT * FROM workouts;")
-df = convert_times(df)
+conn = init_connection()
+
+@st.cache_resource(ttl=86400)
+def get_workouts():
+    workouts = pd.read_sql("SELECT * FROM workouts", conn)
+    return workouts
+
+df = get_workouts()
 
 # Additional queries
-
-most_recent_query = """
+# Run queries for most recent and past workouts
+most_recent_workout = pd.read_sql("""
     WITH MostRecent AS (
         SELECT workout_id,
             start_time::timestamp AS start_time,
@@ -62,22 +73,19 @@ most_recent_query = """
     FROM workouts
     JOIN MostRecent ON workouts.workout_id = MostRecent.workout_id
     ORDER BY workouts.exercise_index ASC;
-"""
+""", conn)
 
-past_workouts_query = """
+past_workouts = pd.read_sql("""
     SELECT
-        COUNT(DISTINCT CASE
-            WHEN start_time::timestamp >= CURRENT_DATE - INTERVAL '30 days'
-            THEN workout_id END) AS past_month,
-        COUNT(DISTINCT CASE
-            WHEN start_time::timestamp BETWEEN (CURRENT_DATE - INTERVAL '60 days')
-                                AND (CURRENT_DATE - INTERVAL '30 days')
-            THEN workout_id END) AS prev_month
-    FROM workouts;
-"""
-# Run queries for most recent and past workouts
-most_recent_workout = run_query(most_recent_query)
-past_workouts = run_query(past_workouts_query)
+	COUNT(DISTINCT CASE
+		WHEN start_time::timestamp >= CURRENT_DATE - INTERVAL '30 days'
+		THEN workout_id END) AS past_month,
+	COUNT(DISTINCT CASE
+		WHEN start_time::timestamp BETWEEN (CURRENT_DATE - INTERVAL '60 days')
+							AND (CURRENT_DATE - INTERVAL '30 days')
+		THEN workout_id END) AS prev_month
+FROM workouts;
+""", conn)
 # Get the count of workouts in the past month and the delta from the previous month
 past_month_workout_count, delta_label = get_count_and_delta(past_workouts)
 # Get total workouts
