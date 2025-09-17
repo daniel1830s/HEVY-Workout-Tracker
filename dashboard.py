@@ -37,8 +37,7 @@ def init_connection():
         database=st.secrets["database"],
         user=st.secrets["username"],
         password=st.secrets["password"],
-        sslmode='verify-full',
-        sslrootcert='./prod-ca-2021.crt'
+        sslmode='require',
     )
 
 conn = init_connection()
