@@ -31,13 +31,14 @@ st.set_page_config(
 # Uses ttl=86400 to only rerun when the query changes or after 24 hours.
 @st.cache_resource(ttl=86400)
 def init_connection():
-    pg = st.secrets["connections"]["postgresql"]
     return psycopg2.connect(
-        host=pg["host"],
-        port=pg["port"],
-        database=pg["database"],
-        user=pg["username"],
-        password=pg["password"]
+        host=st.secrets["host"],
+        port=st.secrets["port"],
+        database=st.secrets["database"],
+        user=st.secrets["username"],
+        password=st.secrets["password"],
+        sslmode='verify-full',
+        sslrootcert='./prod-ca-2021.crt'
     )
 
 conn = init_connection()

@@ -211,3 +211,6 @@ __marimo__/
 
 # Dev Containers
 .devcontainer/
+
+# Supabase SSL Cert
+prod-ca-2021.crt

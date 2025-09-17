@@ -21,17 +21,19 @@ in my pipeline)
 
 '''
 
-# Helper function to connect to my Azure SQL DB
+# Helper function to connect to my Supabase Postgres DB
 def connect_to_db():
     # Setting up DB conection
     try:
-        # Connection string for my Azure SQL Database
+        # Connection string for my Supabase Postgres Database
         conn = psycopg2.connect(
             host=os.getenv('HOST'),
+            port=5432,
             database=os.getenv('DATABASE'),
-            user=os.getenv('USER'),
+            user=os.getenv('USERNAME'),
             password=os.getenv('PASSWORD'),
-            port=5432
+            sslmode='verify-full',
+            sslrootcert='./prod-ca-2021.crt'
         )
         return conn
     except Exception as e:
