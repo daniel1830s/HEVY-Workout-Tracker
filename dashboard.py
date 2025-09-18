@@ -40,18 +40,16 @@ def init_connection():
         sslmode='require',
     )
 
-conn = init_connection()
+def run_query(query):
+    params = init_connection()
+    with psycopg2.connect(**params) as conn:
+        return pd.read_sql(query, conn)
 
-@st.cache_resource(ttl=86400)
-def get_workouts():
-    workouts = pd.read_sql("SELECT * FROM workouts", conn)
-    return workouts
-
-df = get_workouts()
+df = run_query("SELECT * FROM workouts")
 
 # Additional queries
 # Run queries for most recent and past workouts
-most_recent_workout = pd.read_sql("""
+most_recent_workout = run_query("""
     WITH MostRecent AS (
         SELECT workout_id,
             start_time::timestamp AS start_time,
@@ -73,9 +71,9 @@ most_recent_workout = pd.read_sql("""
     FROM workouts
     JOIN MostRecent ON workouts.workout_id = MostRecent.workout_id
     ORDER BY workouts.exercise_index ASC;
-""", conn)
+""")
 
-past_workouts = pd.read_sql("""
+past_workouts = run_query("""
     SELECT
 	COUNT(DISTINCT CASE
 		WHEN start_time::timestamp >= CURRENT_DATE - INTERVAL '30 days'
@@ -85,7 +83,8 @@ past_workouts = pd.read_sql("""
 							AND (CURRENT_DATE - INTERVAL '30 days')
 		THEN workout_id END) AS prev_month
 FROM workouts;
-""", conn)
+""")
+
 # Get the count of workouts in the past month and the delta from the previous month
 past_month_workout_count, delta_label = get_count_and_delta(past_workouts)
 # Get total workouts
